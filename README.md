@@ -2,17 +2,17 @@
 Conversation Chatbot for Tembusu Library
 
 ## Key modules
-1. Telegram bot module
+**1. Telegram bot module**
 
 This module provides the access to telegram and it will make telegram connection to the conversation module.
 
-2. Conversation module
+**2. Conversation module**
 
 This module provides access to various chatbot service. It started with AWS Lex. Next could be Google and maybe a LLM. 
 
 This module will handle the conversation and validate the inputs with backend.
 
-3. (Upcoming) Backend module 
+**3. (Upcoming) Backend module**
 
 Backend module will connect to DB for information validation, creation, update etc. 
 
