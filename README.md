@@ -25,3 +25,5 @@ The keys and secrets are currently handled and passed over offline, not coded he
 |Date|Description|
 |---|---|
 |2025 Mar 15| Decoupled the conversation handling from telegram module|
+|2025 Mar 16| <li> Added validation of MatricNumber (to follow format "letter-7digits-letter") and</li><li> book name (from a book list that's set in self.bookList)</li>|
+
