@@ -18,7 +18,7 @@ class LexHandler:
         text = matricNum.strip().lower() # if matricNum else ""
 
         # Case-insensitive matching (A1234567Z, UT9876543X, etc.)
-        pattern = re.compile(r'^(a|u|ut|ht)[0-9]{7}[a-z]$', re.IGNORECASE)
+        pattern = re.compile(r'^(ut|ht|a|u)[0-9]{7}[a-z]$', re.IGNORECASE)
 
         print(f"Input: '{text}'")
         print(f"Regex Pattern: {pattern.pattern}")
