@@ -1,6 +1,7 @@
 # conversation_module/__init__.py
 from .lex_handler import LexHandler
-#from .dialogflow_handler import DialogflowHandler
+from .dialogflow_handler import DialogflowHandler
+from .custom_handler import CustomHandler 
 
 def get_conversation_handler(service_provider: str):
     """
@@ -9,10 +10,8 @@ def get_conversation_handler(service_provider: str):
     if service_provider == "lex":
         return LexHandler()
     elif service_provider == "dialogflow":
-        #    return DialogflowHandler()
-        pass
+        return DialogflowHandler()
     elif service_provider == "custom":
-        # Return a custom handler if implemented
-        pass
+        return CustomHandler()
     else:
         raise ValueError(f"Unsupported service provider: {service_provider}")

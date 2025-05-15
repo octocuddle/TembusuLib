@@ -1,7 +1,8 @@
 # telegram_module/telegram_bot.py
 from typing import Final
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
+from telegram import InlineKeyboardMarkup
 import os
 from conversation_module import get_conversation_handler  # Import the factory function
 
@@ -31,23 +32,43 @@ def start_bot(service_provider: str):
 
     # Handle messages
     async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        message_type: str = update.message.chat.type
-        text: str = update.message.text
-        user_id: str = str(update.message.chat.id)
+        text = update.message.text
+        user_id = str(update.message.chat.id)
+        response = conversation_handler.handle_request(text, user_id)
 
-        print(f'User ({user_id}) in {message_type}: "{text}"')
+        if isinstance(response, str):  # simple string fallback
+            await update.message.reply_text(response)
+            return
 
-        if message_type == 'group':
-            if BOT_USERNAME in text:
-                new_text: str = text.replace(BOT_USERNAME, '').strip()
-                response: str = conversation_handler.handle_request(new_text, user_id)
-            else: 
-                return
-        else:
-            response: str = conversation_handler.handle_request(text, user_id)
+        if response["type"] == "text":
+            await update.message.reply_text(response["text"])
+
+        elif response["type"] == "buttons":
+            reply_markup = InlineKeyboardMarkup(response["buttons"])
+            await update.message.reply_text(response["text"], reply_markup=reply_markup)
+
+        elif response["type"] == "confirm":
+            reply_markup = InlineKeyboardMarkup(response["buttons"])
+            await update.message.reply_text(response["text"], reply_markup=reply_markup)
+
+    async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        query = update.callback_query
+        await query.answer()
+        user_id = str(query.from_user.id)
+        data = query.data
+
+        response = conversation_handler.handle_callback(data, user_id)
         
-        print('Bot:', response)
-        await update.message.reply_text(response)
+
+        if isinstance(response, str):
+            await query.message.reply_text(response)
+        elif response["type"] == "text":
+            await query.message.reply_text(response["text"])
+        elif response["type"] in ("buttons", "confirm"):
+            reply_markup = InlineKeyboardMarkup(response["buttons"])
+            await query.message.reply_text(response["text"], reply_markup=reply_markup)
+
+
 
     # Error handler
     async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -58,6 +79,7 @@ def start_bot(service_provider: str):
     app.add_handler(CommandHandler('help', help_command))
     app.add_handler(CommandHandler('custom', custom_command))
     app.add_handler(MessageHandler(filters.TEXT, handle_message))
+    app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_error_handler(error)
 
     # Polls the bot
