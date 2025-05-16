@@ -71,6 +71,17 @@ The database should be running:
 
 The keys and secrets are currently handled and passed over offline, not coded here.
 
+Latest secrets include:
+```
+export AWS_ACCESS_KEY_ID='xx'
+export AWS_SECRET_ACCESS_KEY='xxx'
+export AWS_DEFAULT_REGION='xxx'
+export TELEGRAM_TOKEN='xxx'
+export LEX_BOT_ID='xxx'
+export LEX_BOT_ALIAS_ID='xxx'
+export GOOGLE_APPLICATION_CREDENTIALS="/Users/.../.../xxx.json"
+export DIALOGFLOW_PROJECT_ID="xxx"
+```
 
 # Change Log
 |Date|Description|
