@@ -7,6 +7,7 @@ main.py
 telegram_bot.py
 conversation_module/
 ├── __init__.py
+├── lex_handler.py
 ├── dialogflow_handler.py
 └── custom_handler/
     ├── __init__.py
