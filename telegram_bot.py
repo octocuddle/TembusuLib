@@ -32,24 +32,38 @@ def start_bot(service_provider: str):
 
     # Handle messages
     async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        text = update.message.text
-        user_id = str(update.message.chat.id)
-        response = conversation_handler.handle_request(text, user_id)
+        message = update.message
+        user = message.from_user
+        user_id = str(user.id)
+        username = user.username or user.first_name or "Unknown"
 
-        if isinstance(response, str):  # simple string fallback
-            await update.message.reply_text(response)
+        if message.photo:
+            print(f"[PHOTO] From @{username} (ID: {user_id}) - Received image")
+
+            file = await message.photo[-1].get_file()
+            file_path = await file.download_to_drive()
+            print(f"[PHOTO] From @{username} (ID: {user_id}) → File saved to: {file_path}")
+            response = conversation_handler.handle_photo(file_path, user_id)
+
+        else:
+            text = message.text
+            print(f'[TEXT] From @{username} (ID: {user_id}): "{text}"')
+            response = conversation_handler.handle_request(text, user_id)
+
+        # Handle response
+        if isinstance(response, str):
+            await message.reply_text(response)
+            print(f'[BOT → @{username}] Sent text: {response}')
             return
 
         if response["type"] == "text":
-            await update.message.reply_text(response["text"])
-
-        elif response["type"] == "buttons":
+            await message.reply_text(response["text"])
+            print(f'[BOT → @{username}] Sent text: {response["text"]}')
+        elif response["type"] in ("buttons", "confirm"):
             reply_markup = InlineKeyboardMarkup(response["buttons"])
-            await update.message.reply_text(response["text"], reply_markup=reply_markup)
+            await message.reply_text(response["text"], reply_markup=reply_markup)
+            print(f'[BOT → @{username}] Sent message with buttons: {response["text"]}')
 
-        elif response["type"] == "confirm":
-            reply_markup = InlineKeyboardMarkup(response["buttons"])
-            await update.message.reply_text(response["text"], reply_markup=reply_markup)
 
     async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
@@ -58,7 +72,7 @@ def start_bot(service_provider: str):
         data = query.data
 
         response = conversation_handler.handle_callback(data, user_id)
-        
+        print(f'[CALLBACK] From @{query.from_user.username or query.from_user.first_name} (ID: {user_id}) clicked: {data}')
 
         if isinstance(response, str):
             await query.message.reply_text(response)
@@ -79,7 +93,9 @@ def start_bot(service_provider: str):
     app.add_handler(CommandHandler('help', help_command))
     app.add_handler(CommandHandler('custom', custom_command))
     app.add_handler(MessageHandler(filters.TEXT, handle_message))
+    app.add_handler(MessageHandler(filters.PHOTO, handle_message))
     app.add_handler(CallbackQueryHandler(handle_callback))
+    
     app.add_error_handler(error)
 
     # Polls the bot
