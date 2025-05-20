@@ -1,11 +1,15 @@
 # utils/db_book_validator.py
 import requests
+import os
 
-def get_book_by_qr(qr_code: str, base_url: str = "http://localhost:8000") -> tuple[bool, dict | str]:
+def get_book_by_qr(qr_code: str) -> tuple[bool, dict | str]:
     """
     Validate book existence and availability using the scanned QR code.
     Returns (is_valid: bool, book_info or error_msg)
     """
+    
+    base_url = os.getenv("FASTAPI_BASE_URL", "http://localhost:8000")  # default fallback
+
     try:
         qr_code = qr_code.strip().lower()
         url = f"{base_url}/api/v1/book_copies/qr-code/{qr_code}"

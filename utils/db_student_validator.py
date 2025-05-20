@@ -1,14 +1,16 @@
 # utils/db_student_validator.py
 
 import requests
+import os
 
-def validate_student_info(matric: str, email: str, base_url: str = "http://localhost:8000") -> tuple[bool, str]:
+def validate_student_info(matric: str, email: str) -> tuple[bool, str]:
     """
     Validate student info by checking if both matric and email belong to the same student.
     Returns (is_valid: bool, student_name_or_error: str)
     """
     matric = matric.lower()
     email = email.lower()
+    base_url = os.getenv("FASTAPI_BASE_URL", "http://localhost:8000")  # default fallback
     search_url = f"{base_url}/api/v1/student/search"
 
     try:

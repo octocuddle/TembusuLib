@@ -84,10 +84,16 @@ export GOOGLE_APPLICATION_CREDENTIALS="/Users/.../.../xxx.json"
 export DIALOGFLOW_PROJECT_ID="xxx"
 ```
 
+# Docker-related setup
+In order for the chatbot to work on docker, we need to make sure all the db base url uses db:8000 instead of localhost:8000
+
+We also need to include the Dockerfile under the folder where the project runs.
+
 # Change Log
 |Date|Description|
 |---|---|
 |2025 Mar 15| Decoupled the conversation handling from telegram module|
 |2025 Mar 16| <li> Added validation of MatricNumber (to follow format "letter-7digits-letter") and</li><li> book name (from a book list that's set in self.bookList)</li>|
 |2025 May 16| Updated the utility backend service and how to run code.|
+|2025 May 20| Updated the docker related content.|
 

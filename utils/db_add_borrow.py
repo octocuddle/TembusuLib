@@ -1,11 +1,14 @@
 # utils/db_add_borrow.py
 import requests
+import os
 
-def borrow_book(copy_id: int, matric_number: str, loan_days: int = 14, base_url: str = "http://localhost:8000"):
+def borrow_book(copy_id: int, matric_number: str, loan_days: int = 14):
     """
     Attempt to create a borrow record in the backend.
     Returns (is_successful: bool, message: str)
     """
+    base_url = os.getenv("FASTAPI_BASE_URL", "http://localhost:8000")  # default fallback
+
     try:
         response = requests.post(
             f"{base_url}/api/v1/borrowing/",
