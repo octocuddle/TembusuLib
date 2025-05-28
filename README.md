@@ -2,9 +2,15 @@
 Conversation Chatbot for Tembusu Library
 
 ## Key modules
+
 ```
 main.py
 telegram_bot.py
+Dockerfile
+
+credentials/ # .gitignored
+└── google service account .json
+
 conversation_module/
 ├── __init__.py
 ├── lex_handler.py
@@ -16,6 +22,7 @@ conversation_module/
     ├── component_common.py
     ├── component_loanrecord.py
     └── component_photo.py
+
 utils/
 ├── db_add_borrow.py
 ├── db_book_validator.py
@@ -23,7 +30,6 @@ utils/
 ├── db_student_validator.py
 └── qr_decoder.py
 ```
-
 
 
 **1. Telegram bot module**
