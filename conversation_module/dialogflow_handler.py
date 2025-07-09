@@ -21,7 +21,7 @@ class DialogflowHandler:
             return result.fulfillment_text or "No response from Dialogflow."
         except Exception as e:
             print(f"Dialogflow error: {e}")
-            return "I encountered an error while processing your request."
+            return "Oops! Something went wrong on my end. Please try your request again, or contact our library admin on Telegram if you need immediate help."
 
     def raw_detect_intent(self, text: str, user_id: str) -> dict:
         session = self.session_client.session_path(self.project_id, user_id)
@@ -38,6 +38,7 @@ class DialogflowHandler:
                 "intent": result.intent.display_name,
                 "parameters": dict(result.parameters),
                 "fulfillment_text": result.fulfillment_text,
+                "output_contexts": result.output_contexts,
                 "confidence": result.intent_detection_confidence
             }
 
@@ -46,6 +47,6 @@ class DialogflowHandler:
             return {
                 "intent": None,
                 "parameters": {},
-                "fulfillment_text": "Sorry, I encountered an error.",
+                "fulfillment_text": "Oops! Something went wrong on my end. Please try your request again, or contact our library admin on Telegram if you need immediate help.",
                 "confidence": 0
             }

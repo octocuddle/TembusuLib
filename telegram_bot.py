@@ -13,6 +13,8 @@ if not TOKEN:
 
 BOT_USERNAME: Final = '@TembusuLib_bot'
 
+print("Credential path:", os.getenv("GOOGLE_APPLICATION_CREDENTIALS"))
+
 # Initialize ConversationHandler based on service provider
 def start_bot(service_provider: str):
     conversation_handler = get_conversation_handler(service_provider)  # Use factory function
@@ -81,7 +83,6 @@ def start_bot(service_provider: str):
         elif response["type"] in ("buttons", "confirm"):
             reply_markup = InlineKeyboardMarkup(response["buttons"])
             await query.message.reply_text(response["text"], reply_markup=reply_markup)
-
 
 
     # Error handler

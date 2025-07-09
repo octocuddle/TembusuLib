@@ -2,6 +2,7 @@ from ..dialogflow_handler import DialogflowHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from conversation_module.custom_handler.component_borrow import handle_borrow_auth, handle_confirm_borrow
 from conversation_module.custom_handler.component_loanrecord import handle_loan_auth, handle_confirm_loan
+from conversation_module.custom_handler.component_search import handle_search_book,handle_search_book_title, handle_search_book_author
 from conversation_module.custom_handler.component_common import show_welcome
 from conversation_module.custom_handler.component_photo import handle_photo as handle_photo_component
 
@@ -16,9 +17,10 @@ class CustomHandler:
         intent = df_response["intent"]
         params = df_response["parameters"]
         fulfillment = df_response["fulfillment_text"]
-        print(f'intent: {intent}')
-        print(f'params: {params}')
-        print(f'fulfillment: {fulfillment}')
+        output_contexts = df_response["output_contexts"]
+        print("output_contexts",output_contexts)
+        output_params = output_contexts[0].parameters
+        print("output_params",output_params)
 
         if self.user_state.get(user_id, {}).get("stage") == "auth_pending":
             intent = "borrow - authentication"
@@ -34,6 +36,15 @@ class CustomHandler:
 
         if intent == "loanrecord - authentication":
             return handle_loan_auth(user_id, params, self.user_state)
+        
+        if intent == "searchbook":
+            return handle_search_book()
+
+        if intent == "searchbook - title - confirm":
+            return handle_search_book_title(output_params)
+        
+        if intent == "searchbook - author - confirm":
+            return handle_search_book_author(output_params)
 
         return {
             "type": "text",
@@ -46,6 +57,8 @@ class CustomHandler:
             return self.handle_request("borrow", user_id)
         elif callback_data == "intent_loan":
             return self.handle_request("loanrecord", user_id)
+        elif callback_data == "intent_search":
+            return self.handle_request("search", user_id)
 
         if callback_data == "confirm_yes":
             return handle_confirm_borrow(user_id, self.user_state)
@@ -58,6 +71,12 @@ class CustomHandler:
         elif callback_data == "confirm_loan_no":
             self.user_state.pop(user_id, None)
             return self.handle_request("loanrecord", user_id)
+        
+        if callback_data == "search_book_title":
+            return self.handle_request("search book via book title", user_id)
+        elif callback_data == "search_book_author":
+            return self.handle_request("search book via book author", user_id)
+        
 
         return {
             "type": "text",
@@ -66,3 +85,4 @@ class CustomHandler:
     
     def handle_photo(self, file_path: str, user_id: str):
         return handle_photo_component(file_path, user_id, self.user_state)
+
