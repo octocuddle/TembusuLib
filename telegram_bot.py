@@ -1,8 +1,11 @@
-# telegram_module/telegram_bot.py
+# telegram_bot.py
 from typing import Final
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from telegram import InlineKeyboardMarkup
+from conversation_module.custom_handler.component_common import show_welcome
+from utils.db_telegramid_validator import validate_student_by_telegram_id
+from utils.auth_helpers import get_authenticated_user, authenticated_users
 import os
 from conversation_module import get_conversation_handler  # Import the factory function
 
@@ -13,6 +16,9 @@ if not TOKEN:
 
 BOT_USERNAME: Final = '@TembusuLib_bot'
 
+# Track user auth sessions: {telegram_id: student_data}
+authenticated_users = {}
+
 # Initialize ConversationHandler based on service provider
 def start_bot(service_provider: str):
     conversation_handler = get_conversation_handler(service_provider)  # Use factory function
@@ -22,13 +28,32 @@ def start_bot(service_provider: str):
 
     # Commands
     async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await update.message.reply_text("Hello! Welcome to Tembusu Reading Room.")
+        user = update.effective_user
+        user_id = str(user.id)
+        username = user.username or user.first_name or "Unknown"
+
+        is_valid, result = get_authenticated_user(user_id)
+        if not is_valid:
+            await update.message.reply_text(result)
+            print(f'[AUTH FAIL] @{username} (ID: {user_id}) – {result}')
+            return
+        
+        print(f'[AUTH OK] @{username} (ID: {user_id}) authenticated as {result["full_name"]} ({result["matric_number"]})')
+        
+        await update.message.reply_text(
+            f"Hi {result.get('full_name', 'Student')} ({result.get('matric_number', 'unknown')}), we are processing your request..."
+        )
+
+        response = show_welcome()
+        reply_markup = InlineKeyboardMarkup(response["buttons"])
+        await update.message.reply_text(response["text"], reply_markup=reply_markup)
+
 
     async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Please type something so I can respond =)")
 
-    async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await update.message.reply_text("This is a custom command!")
+    '''async def custom_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await update.message.reply_text("This is a custom command!")'''
 
     # Handle messages
     async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -36,6 +61,21 @@ def start_bot(service_provider: str):
         user = message.from_user
         user_id = str(user.id)
         username = user.username or user.first_name or "Unknown"
+
+        # Authenticate only if not already done
+        is_valid, result = get_authenticated_user(user_id)
+        if not is_valid:
+            await update.message.reply_text(result)
+            print(f'[AUTH FAIL] @{username} (ID: {user_id}) – {result}')
+            return
+
+        print(f'[AUTH OK] @{username} (ID: {user_id}) authenticated as {result["full_name"]} ({result["matric_number"]})')
+        
+        # Greet user
+        await message.reply_text(
+            f"Hi {result.get('full_name', 'Student')} ({result.get('matric_number', 'unknown')}), we are processing your request..."
+        )
+
 
         if message.photo:
             print(f"[PHOTO] From @{username} (ID: {user_id}) - Received image")
@@ -91,7 +131,7 @@ def start_bot(service_provider: str):
     # Add handlers
     app.add_handler(CommandHandler('start', start_command))
     app.add_handler(CommandHandler('help', help_command))
-    app.add_handler(CommandHandler('custom', custom_command))
+    # app.add_handler(CommandHandler('custom', custom_command))
     app.add_handler(MessageHandler(filters.TEXT, handle_message))
     app.add_handler(MessageHandler(filters.PHOTO, handle_message))
     app.add_handler(CallbackQueryHandler(handle_callback))

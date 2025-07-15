@@ -21,7 +21,7 @@ def borrow_book(copy_id: int, matric_number: str, loan_days: int = 14):
         )
 
         if response.status_code == 201:
-            return True, "Borrowing record successfully created."
+            return True, response.json()     
         else:
             return False, f"Borrowing failed: {response.status_code}, {response.text}"
     except Exception as e:
