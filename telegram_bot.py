@@ -114,16 +114,22 @@ def start_bot(service_provider: str):
         response = conversation_handler.handle_callback(data, user_id)
         print(f'[CALLBACK] From @{query.from_user.username or query.from_user.first_name} (ID: {user_id}) clicked: {data}')
 
-        if isinstance(response, str):
-            await query.message.reply_text(response)
-        elif response["type"] == "text":
-            await query.message.reply_text(response["text"])
-        elif response["type"] in ("buttons", "confirm"):
-            reply_markup = InlineKeyboardMarkup(response["buttons"])
-            await query.message.reply_text(response["text"], reply_markup=reply_markup)
+        if isinstance(response, list):
+            for res in response:
+                await _send_response(query.message, res)
+        else:
+            await _send_response(query.message, response)
 
 
-
+    async def _send_response(message, res):
+        if isinstance(res, str):
+            await message.reply_text(res)
+        elif res["type"] == "text":
+            await message.reply_text(res["text"])
+        elif res["type"] in ("buttons", "confirm"):
+            reply_markup = InlineKeyboardMarkup(res["buttons"])
+            await message.reply_text(res["text"], reply_markup=reply_markup)
+            
     # Error handler
     async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(f'Update {update} cause error {context.error}')

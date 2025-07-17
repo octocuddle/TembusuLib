@@ -5,7 +5,7 @@ from utils.qr_decoder import decode_qr
 from utils.db_book_validator import get_book_by_qr
 from utils.db_add_borrow import borrow_book
 from utils.auth_helpers import authenticated_users
-from datetime import datetime
+from utils.date_parser import pretty_date
 
 def start_borrow_flow(user_id: str, user_state: dict, fulfillment_text: str):
     user_state[user_id] = {"stage": "borrow_waiting_qr"}
@@ -83,12 +83,12 @@ def handle_confirm_borrow(user_id: str, user_state: dict):
     # result is the borrow record
     student_name = result.get("student_name", "Unknown")
     student_matric = result.get("matric_number", "N/A")
-    due_date_raw = result.get("due_date")
+    due_date = pretty_date(result.get("due_date", ""))
 
-    try:
+    '''try:
         due_date = datetime.fromisoformat(due_date_raw).strftime("%Y-%m-%d")
     except Exception:
-        due_date = due_date_raw or "Unknown"
+        due_date = due_date_raw or "Unknown"'''
 
     return {
         "type": "text",
@@ -98,7 +98,8 @@ def handle_confirm_borrow(user_id: str, user_state: dict):
             f"📖 Title: {book_info.get("book_title", "Untitled")}\n"
             f"✍️ Author: {book_info.get("book_author", "Unknown Author")}\n"
             f"🏷️ ISBN: {book_info.get("book_isbn", "N/A")}\n"
-            f"📅 Due date: {due_date}"
+            f"📅 Due date: {due_date}\n\n"
+            f"Use Start button in Menu if you need to access borrowing or other library services. \nOtherwise, have a nice day."
         )
     }
 

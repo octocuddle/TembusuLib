@@ -3,15 +3,17 @@ import requests
 import os
 
 # Displaying up to 25 books
-def get_loan_history(matric: str):
+def get_loan_history(matric: str, active_only=True, limit=25):
 
     base_url = os.getenv("FASTAPI_BASE_URL", "http://localhost:8000")  # default fallback
     
     try:
+        # print(f"{base_url}/api/v1/borrowing/student/{matric}?active_only={str(active_only).lower()}&skip=0&limit={limit}")
         response = requests.get(
-            f"{base_url}/api/v1/borrowing/student/{matric}/history?include_active=True&limit=25",
+            f"{base_url}/api/v1/borrowing/student/{matric}?active_only={str(active_only).lower()}&skip=0&limit={limit}",
             timeout=5
         )
+        # print(f"response of get_loan_history is: {response.json()}")
         if response.status_code == 200:
             data = response.json()
             return True, data

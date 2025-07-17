@@ -8,7 +8,8 @@ from conversation_module.custom_handler.component_borrow import (
     handle_confirm_borrow,
     handle_cancel_borrow
 )
-from conversation_module.custom_handler.component_loanrecord import handle_loan_auth, handle_confirm_loan
+from conversation_module.custom_handler.component_loanrecord import handle_loan_request
+from conversation_module.custom_handler.component_extendloan import handle_extend_request
 from conversation_module.custom_handler.component_common import show_welcome
 
 
@@ -38,8 +39,11 @@ class CustomHandler:
         if intent == "borrow":
             return start_borrow_flow(user_id, self.user_state, fulfillment)
 
-        if intent == "loanrecord - authentication":
-            return handle_loan_auth(user_id, params, self.user_state)
+        if intent == "loanrecord":
+            return handle_loan_request(user_id)
+        
+        if intent == "extendloan":
+            return handle_extend_request(user_id)
 
         return {
             "type": "text",
@@ -48,21 +52,33 @@ class CustomHandler:
 
     def handle_callback(self, callback_data: str, user_id: str):
         print(f"[DEBUG] handle_callback triggered with {callback_data}")
+
         if callback_data == "intent_borrow":
             return self.handle_request("borrow", user_id)
+        
         elif callback_data == "intent_loan":
             return self.handle_request("loanrecord", user_id)
+        
+        elif callback_data == "intent_extendloan":
+            return self.handle_request("extendloan", user_id)
+        
+        elif callback_data.startswith("extend_borrow_id_"):
+            borrow_id = int(callback_data.split("_")[-1])
+            return handle_extend_request(user_id, borrow_id)
+
+
 
         if callback_data == "confirm_borrow_yes":
             return handle_confirm_borrow(user_id, self.user_state)
         elif callback_data == "confirm_borrow_no":
             return handle_cancel_borrow(user_id, self.user_state)
 
-        if callback_data == "confirm_loan_yes":
+        '''if callback_data == "confirm_loan_yes":
             return handle_confirm_loan(user_id, self.user_state)
+        
         elif callback_data == "confirm_loan_no":
             self.user_state.pop(user_id, None)
-            return self.handle_request("loanrecord", user_id)
+            return self.handle_request("loanrecord", user_id)'''
 
         return {
             "type": "text",
