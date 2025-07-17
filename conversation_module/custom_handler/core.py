@@ -8,7 +8,7 @@ from conversation_module.custom_handler.component_borrow import (
     handle_confirm_borrow,
     handle_cancel_borrow
 )
-from conversation_module.custom_handler.component_loanrecord import handle_loan_request
+from conversation_module.custom_handler.component_loanrecord import handle_loan_request, handle_loan_response
 from conversation_module.custom_handler.component_extendloan import handle_extend_request
 from conversation_module.custom_handler.component_common import show_welcome
 
@@ -66,19 +66,23 @@ class CustomHandler:
             borrow_id = int(callback_data.split("_")[-1])
             return handle_extend_request(user_id, borrow_id)
 
-
-
         if callback_data == "confirm_borrow_yes":
             return handle_confirm_borrow(user_id, self.user_state)
         elif callback_data == "confirm_borrow_no":
             return handle_cancel_borrow(user_id, self.user_state)
 
-        '''if callback_data == "confirm_loan_yes":
-            return handle_confirm_loan(user_id, self.user_state)
-        
-        elif callback_data == "confirm_loan_no":
-            self.user_state.pop(user_id, None)
-            return self.handle_request("loanrecord", user_id)'''
+
+        if callback_data == "loanrecord_view_active":
+            return handle_loan_response(user_id, choice="active")
+        elif callback_data == "loanrecord_view_past":
+            return handle_loan_response(user_id, choice="past")
+        elif callback_data == "loanrecord_extend_yes":
+            return handle_extend_request(user_id)
+        elif callback_data == "loanrecord_extend_no":
+            return {
+                "type": "text",
+                "text": "👌 Use Menu to continue accessing library services. \nHave a nice day."
+            }
 
         return {
             "type": "text",

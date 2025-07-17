@@ -8,8 +8,28 @@ from utils.date_parser import pretty_date
 
 def handle_loan_request(user_id: str):
     student_info = authenticated_users.get(user_id)
-    print("[DEBUG]", student_info)
 
+    if not student_info:
+        return {
+            "type": "text",
+            "text": "❌ You are not authenticated. Please reconnect to continue."
+        }
+
+    buttons = [
+        [
+            InlineKeyboardButton("📌 View Active Loans", callback_data="loanrecord_view_active"),
+            InlineKeyboardButton("📚 View Past Loans", callback_data="loanrecord_view_past")
+        ]
+    ]
+
+    return {
+        "type": "buttons",
+        "text": "Your request to retrieve loan record is received. \nWhat type of loan record would you like to view?",
+        "buttons": buttons
+    }
+
+def handle_loan_response(user_id: str, choice: str):
+    student_info = authenticated_users.get(user_id)
     if not student_info:
         return {
             "type": "text",
@@ -18,83 +38,87 @@ def handle_loan_request(user_id: str):
 
     name = student_info.get("full_name")
     matric = student_info.get("matric_number")
+    messages = []
 
-    # Get active loans
+    # Fetch all active loans once (needed for both purposes)
     success_active, active_loans = get_loan_history(matric, active_only=True, limit=25)
     if not success_active:
         return {
             "type": "text",
             "text": f"❌ Failed to fetch active loans: {active_loans}"
         }
+
     active_loans.sort(key=lambda r: r.get("borrow_id", 0), reverse=True)
-    # print("active loans are:", active_loans)
 
-    # Get past loans
-    success_past, past_loans = get_loan_history(matric, active_only=False, limit=100)
-    if not success_past:
-        return {
-            "type": "text",
-            "text": f"❌ Failed to fetch past loans: {past_loans}"
-        }
-    past_loans.sort(key=lambda r: r.get("borrow_id", 0), reverse=True)
-    # print("past loans are:", past_loans)
+    # === If viewing ACTIVE ===
+    if choice == "active":
+        if active_loans:
+            overdue = [r for r in active_loans if r.get("is_overdue")]
+            current = [r for r in active_loans if not r.get("is_overdue")]
 
-    messages = [f"{name} ({matric})'s Loan Records"]
+            lines = [f"{name} ({matric})'s 📌 Active Loans:"]
+            if overdue:
+                lines.append("\n⚠️ Overdue Books:")
+                for r in overdue:
+                    lines.append(_format_loan_record(r))
 
-    # === ACTIVE LOANS ===
-    if active_loans:
-        overdue = [r for r in active_loans if r.get("is_overdue")]
-        current = [r for r in active_loans if not r.get("is_overdue")]
-        
+            if current:
+                lines.append("\n✅ Currently Borrowed:")
+                for r in current:
+                    lines.append(_format_loan_record(r))
 
-        lines = [f"📌 Active Loans ({matric}):"]
+            messages.append({"type": "text", "text": "\n".join(lines)})
+        else:
+            messages.append({"type": "text", "text": f"📭 No active loans found for {matric}."})
 
-        if overdue:
-            lines.append("⚠️ Overdue Books:")
-            for r in overdue:
+    # === If viewing PAST ===
+    elif choice == "past":
+        success_past, past_loans = get_loan_history(matric, active_only=False, limit=100)
+        if not success_past:
+            return {
+                "type": "text",
+                "text": f"❌ Failed to fetch past loans: {past_loans}"
+            }
+
+        past_loans.sort(key=lambda r: r.get("borrow_id", 0), reverse=True)
+        recent_cutoff = datetime.utcnow() - timedelta(days=180)
+        past_recent = []
+
+        for r in past_loans:
+            return_str = r.get("return_date")
+            if return_str:
+                try:
+                    returned_dt = datetime.fromisoformat(return_str.replace("Z", ""))
+                    if returned_dt > recent_cutoff:
+                        past_recent.append(r)
+                except Exception as e:
+                    print(f"[ERROR] Failed to parse return_date {return_str}: {e}")
+                    continue
+
+        if past_recent:
+            lines = [f"{name} ({matric})'s 📚 Past Loans (last 6 months):"]
+            for r in past_recent:
                 lines.append(_format_loan_record(r))
+            messages.append({"type": "text", "text": "\n".join(lines)})
+        else:
+            messages.append({"type": "text", "text": "📭 No recent past loans found."})
 
-        if current:
-            lines.append("\n✅ Currently Borrowed:")
-            for r in current:
-                lines.append(_format_loan_record(r))
-
+    # === Extend Option if eligible ===
+    extendable_loans = [r for r in active_loans if not r.get("is_overdue")]
+    if extendable_loans:
+        buttons = [[
+            InlineKeyboardButton("✅ Yes", callback_data="loanrecord_extend_yes"),
+            InlineKeyboardButton("❌ No", callback_data="loanrecord_extend_no")
+        ]]
         messages.append({
-            "type": "text",
-            "text": "\n".join(lines)
+            "type": "buttons",
+            "text": "Would you like to extend any of your current eligible books?",
+            "buttons": buttons
         })
-    else:
+    elif choice == "active":
         messages.append({
             "type": "text",
-            "text": f"📭 No active loans found for {matric}."
-        })
-
-    # === PAST LOANS ===
-    recent_cutoff = datetime.utcnow() - timedelta(days=180)
-    # print("recent cutoff:", recent_cutoff)
-
-    past_recent = []
-
-    for r in past_loans:
-        return_str = r.get("return_date")
-        if return_str:
-            try:
-                returned_dt = datetime.fromisoformat(return_str.replace("Z", "")) 
-                # print(f"return_dt: {returned_dt}")
-                # print("returned_dt > recent_cutoff is", returned_dt > recent_cutoff)
-                if returned_dt > recent_cutoff:
-                    past_recent.append(r)
-            except Exception as e:
-                print(f"[ERROR] Failed to parse return_date {return_str}: {e}")
-                continue
-
-    if past_recent:
-        lines = [f"📚 Past Loans (last 6 months):"]
-        for r in past_recent:
-            lines.append(_format_loan_record(r))
-        messages.append({
-            "type": "text",
-            "text": "\n".join(lines)
+            "text": "You have no books eligible for extension at this time."
         })
 
     return messages
@@ -105,13 +129,11 @@ def _format_loan_record(record):
     borrow_date = pretty_date(record.get("borrow_date", ""))
     due_date = pretty_date(record.get("due_date", ""))
     return_date = pretty_date(record.get("return_date")) if record.get("return_date") else "Not yet returned"
-    status = record.get("status", "unknown").capitalize()
     overdue_note = "⚠️ Overdue" if record.get("is_overdue") else ""
 
     return (
-        f"• {title}\n"
-        f"  Status: {status}  {overdue_note}\n"
+        f"• {title} {overdue_note}\n"
         f"  Borrowed: {borrow_date}\n"
         f"  Due: {due_date}\n"
-        f"  Returned: {return_date or 'Not yet returned'}"
+        f"  Returned: {return_date or 'Not yet returned'}\n"
     )

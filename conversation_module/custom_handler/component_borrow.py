@@ -99,7 +99,7 @@ def handle_confirm_borrow(user_id: str, user_state: dict):
             f"✍️ Author: {book_info.get("book_author", "Unknown Author")}\n"
             f"🏷️ ISBN: {book_info.get("book_isbn", "N/A")}\n"
             f"📅 Due date: {due_date}\n\n"
-            f"Use Start button in Menu if you need to access borrowing or other library services. \nOtherwise, have a nice day."
+            f"Use Menu to continue accessing library services. \nOtherwise, have a nice day."
         )
     }
 

@@ -65,7 +65,7 @@ def handle_extend_request(user_id, borrow_id=None):
 
         # Buttons only for extendable books
         buttons = [
-            [InlineKeyboardButton(f"🔁 Extend: {r['book_title'][:30]}", callback_data=f"extend_borrow_id_{r['borrow_id']}")]
+            [InlineKeyboardButton(f"⏳ Extend: {r['book_title'][:30]}", callback_data=f"extend_borrow_id_{r['borrow_id']}")]
             for r in extendable_loans
         ]
 
