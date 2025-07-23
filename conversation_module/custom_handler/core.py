@@ -17,6 +17,7 @@ from conversation_module.custom_handler.component_return import (
 from conversation_module.custom_handler.component_loanrecord import handle_loan_request, handle_loan_response
 from conversation_module.custom_handler.component_extendloan import handle_extend_request
 from conversation_module.custom_handler.component_common import show_welcome
+from conversation_module.custom_handler.component_search import handle_search_book,handle_search_book_title, handle_search_book_author
 
 
 class CustomHandler:
@@ -31,7 +32,12 @@ class CustomHandler:
         fulfillment = df_response["fulfillment_text"]
         print(f'intent: {intent}')
         print(f'params: {params}')
-        print(f'fulfillment: {fulfillment}')
+        print(f'fulfillment: {fulfillment}\n')
+
+        output_contexts = df_response["output_contexts"]
+        print("output_contexts (from dialogflow)",output_contexts)
+        output_params = output_contexts[0].parameters
+        print("output_params",output_params,"\n")
 
         if intent == "Default Welcome Intent":
             return show_welcome()
@@ -47,6 +53,15 @@ class CustomHandler:
         
         if intent == "extendloan":
             return handle_extend_request(user_id)
+        
+        if intent == "searchbook":
+            return handle_search_book()
+
+        if intent == "searchbook - title - confirm":
+            return handle_search_book_title(output_params)
+        
+        if intent == "searchbook - author - confirm":
+            return handle_search_book_author(output_params)
 
         return {
             "type": "text",
@@ -72,6 +87,9 @@ class CustomHandler:
             borrow_id = int(callback_data.split("_")[-1])
             return handle_extend_request(user_id, borrow_id)
         
+        elif callback_data == "intent_search":
+            return self.handle_request("search", user_id)
+        
         elif callback_data == "return_proxy_yes":
             return handle_return_proxy_decision(user_id, self.user_state, "yes")
         elif callback_data == "return_proxy_no":
@@ -94,6 +112,12 @@ class CustomHandler:
                 "type": "text",
                 "text": "👌 Use Menu to continue accessing library services. \nHave a nice day."
             }
+        
+        if callback_data == "search_book_title":
+            return self.handle_request("search book via book title", user_id)
+        elif callback_data == "search_book_author":
+            return self.handle_request("search book via book author", user_id)
+        
 
         return {
             "type": "text",
