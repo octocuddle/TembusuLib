@@ -8,10 +8,12 @@ from utils.auth_helpers import authenticated_users
 from utils.date_parser import pretty_date
 
 def start_borrow_flow(user_id: str, user_state: dict, fulfillment_text: str):
-    user_state[user_id] = {"stage": "borrow_waiting_qr"}
+    user_state[user_id] = user_state.get(user_id, {})
+    user_state[user_id]["stage"] = "borrow_waiting_qr"
+    print(f"[STATE] Set {user_id} stage to borrow_waiting_qr")
     return {
         "type": "text",
-        "text": fulfillment_text or "📸 Please upload a photo of the book QR code."
+        "text": fulfillment_text or "📸 Please submit a photo of the book QR code."
     }
 
 def handle_borrow_photo(file_path: str, user_id: str, user_state: dict):
@@ -28,12 +30,6 @@ def handle_borrow_photo(file_path: str, user_id: str, user_state: dict):
             "type": "text",
             "text": f"❌ {book_info}"
         }
-
-    '''if book_info.get("status") != "available":
-        return {
-            "type": "text",
-            "text": f"Book is currently not available for borrowing. Status: {book_info.get('status')}.\n You can take a photo of another book to borrow or using Start button in Menu to proceed to access other library services."
-        }'''
 
     # Save decoded book info temporarily in state
     user_state[user_id] = {
@@ -84,11 +80,6 @@ def handle_confirm_borrow(user_id: str, user_state: dict):
     student_name = result.get("student_name", "Unknown")
     student_matric = result.get("matric_number", "N/A")
     due_date = pretty_date(result.get("due_date", ""))
-
-    '''try:
-        due_date = datetime.fromisoformat(due_date_raw).strftime("%Y-%m-%d")
-    except Exception:
-        due_date = due_date_raw or "Unknown"'''
 
     return {
         "type": "text",

@@ -2,13 +2,13 @@
 import requests
 import os
 
-def get_book_by_qr(qr_code: str) -> tuple[bool, dict | str]:
+def get_book_by_qr(qr_code: str, mode: str = "borrow") -> tuple[bool, dict | str]:
     """
-    Validate book existence and availability using the scanned QR code.
-    Then fetch extended book info using the title.
+    Validate book existence based on QR code.
+    In 'borrow' mode, ensures book is available.
+    In 'return' mode, accepts borrowed books.
     Returns (is_valid: bool, combined_book_info or error_msg)
     """
-    
     base_url = os.getenv("FASTAPI_BASE_URL", "http://localhost:8000")
 
     try:
@@ -23,31 +23,35 @@ def get_book_by_qr(qr_code: str) -> tuple[bool, dict | str]:
                 return False, "Book not found for the scanned QR code."
             return False, f"Unexpected backend error: {response.status_code}"
         
-
         copy_data = response.json()
-        if copy_data.get("status") != "available":
-            return False, f"Book is currently not available for borrowing (Status: {copy_data['status']}). \nYou can take a photo of another book to borrow, or using Start button in Menu to access other services."
-        
-        # Extract book_title to retrieve more details
-        book_title = copy_data.get("book_title")
-        if not book_title:
-            return False, "Book title not found in book copy data."
 
-        # Fetch additional book details
-        book_url = f"{base_url}/api/v1/book/search/title/{book_title}?exact_match=true&limit=20"
+        if mode == "borrow":
+            if copy_data.get("status") != "available":
+                return False, (
+                    f"Book is currently not available for borrowing (Status: {copy_data['status']}). \n"
+                    f"You can take a photo of another book to borrow, or use the Start button in Menu to access other services."
+                )
+        elif mode == "return":
+            if copy_data.get("status") != "borrowed":
+                return False, f"⚠️ This book is not currently borrowed, so it cannot be returned."
+
+        # Continue to fetch full book details
+        book_id = copy_data.get("book_id")
+        if not book_id:
+            return False, "Book ID not found in book copy data."
+
+        book_url = f"{base_url}/api/v1/book/search/id/{book_id}"
         book_response = requests.get(book_url, timeout=5)
+
         print(f"[DEBUG] Book details: {book_response.status_code} | Body: {book_response.text}")
 
         if book_response.status_code != 200:
-            return False, f"Failed to retrieve full book details for '{book_title}'."
+            return False, f"Failed to retrieve full book details for book ID {book_id}."
 
-        book_list = book_response.json()
-        if not book_list:
-            return False, f"No matching book found for title '{book_title}'."
+        book_info = book_response.json()
+        if not book_info:
+            return False, f"No matching book found for title '{book_id}'."
 
-        book_info = book_list[0]  # Use first match
-
-        # Merge and return
         combined = {
             **copy_data,
             **{

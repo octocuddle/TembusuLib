@@ -1,7 +1,7 @@
 # conversation_module/custom_handler/component_loanrecord.py
 
 from telegram import InlineKeyboardButton
-from utils.db_loan_history import get_loan_history
+from utils.db_loan_history import get_loan_history_by_student
 from utils.auth_helpers import authenticated_users
 from datetime import datetime, timedelta
 from utils.date_parser import pretty_date
@@ -41,7 +41,7 @@ def handle_loan_response(user_id: str, choice: str):
     messages = []
 
     # Fetch all active loans once (needed for both purposes)
-    success_active, active_loans = get_loan_history(matric, active_only=True, limit=25)
+    success_active, active_loans = get_loan_history_by_student(matric, active_only=True, limit=25)
     if not success_active:
         return {
             "type": "text",
@@ -73,7 +73,7 @@ def handle_loan_response(user_id: str, choice: str):
 
     # === If viewing PAST ===
     elif choice == "past":
-        success_past, past_loans = get_loan_history(matric, active_only=False, limit=100)
+        success_past, past_loans = get_loan_history_by_student(matric, active_only=False, limit=100)
         if not success_past:
             return {
                 "type": "text",

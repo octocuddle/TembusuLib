@@ -8,6 +8,12 @@ from conversation_module.custom_handler.component_borrow import (
     handle_confirm_borrow,
     handle_cancel_borrow
 )
+from conversation_module.custom_handler.component_return import (
+    start_return_flow,
+    handle_return_book_photo,
+    handle_return_location_photo,
+    handle_return_proxy_decision
+)
 from conversation_module.custom_handler.component_loanrecord import handle_loan_request, handle_loan_response
 from conversation_module.custom_handler.component_extendloan import handle_extend_request
 from conversation_module.custom_handler.component_common import show_welcome
@@ -27,17 +33,14 @@ class CustomHandler:
         print(f'params: {params}')
         print(f'fulfillment: {fulfillment}')
 
-        '''if self.user_state.get(user_id, {}).get("stage") == "auth_pending":
-            intent = "borrow - authentication"
-
-        if intent == "Default Fallback Intent" and self.user_state.get(user_id, {}).get("stage") == "auth_pending":
-            intent = "borrow - authentication"'''
-
         if intent == "Default Welcome Intent":
             return show_welcome()
 
         if intent == "borrow":
             return start_borrow_flow(user_id, self.user_state, fulfillment)
+        
+        if intent == "return":
+            return start_return_flow(user_id, self.user_state, fulfillment)
 
         if intent == "loanrecord":
             return handle_loan_request(user_id)
@@ -56,6 +59,9 @@ class CustomHandler:
         if callback_data == "intent_borrow":
             return self.handle_request("borrow", user_id)
         
+        elif callback_data == "intent_return":
+            return self.handle_request("return", user_id)
+
         elif callback_data == "intent_loan":
             return self.handle_request("loanrecord", user_id)
         
@@ -65,6 +71,11 @@ class CustomHandler:
         elif callback_data.startswith("extend_borrow_id_"):
             borrow_id = int(callback_data.split("_")[-1])
             return handle_extend_request(user_id, borrow_id)
+        
+        elif callback_data == "return_proxy_yes":
+            return handle_return_proxy_decision(user_id, self.user_state, "yes")
+        elif callback_data == "return_proxy_no":
+            return handle_return_proxy_decision(user_id, self.user_state, "no")
 
         if callback_data == "confirm_borrow_yes":
             return handle_confirm_borrow(user_id, self.user_state)
@@ -91,9 +102,15 @@ class CustomHandler:
     
     def handle_photo(self, file_path: str, user_id: str):
         stage = self.user_state.get(user_id, {}).get("stage")
-
+        print(f"[PHOTO HANDLER] user_id={user_id}, stage={stage}")
+        
         if stage == "borrow_waiting_qr":
             return handle_borrow_photo(file_path, user_id, self.user_state)
+        
+        if stage == "return_waiting_book_qr":
+            return handle_return_book_photo(file_path, user_id, self.user_state)
+        elif stage == "return_waiting_location_qr":
+            return handle_return_location_photo(file_path, user_id, self.user_state)
 
         return {
             "type": "text",

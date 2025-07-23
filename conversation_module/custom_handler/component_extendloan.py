@@ -1,5 +1,5 @@
 from telegram import InlineKeyboardButton
-from utils.db_loan_history import get_loan_history
+from utils.db_loan_history import get_loan_history_by_student
 from utils.auth_helpers import authenticated_users
 from utils.db_extend_loan import extend_loan
 from utils.date_parser import pretty_date
@@ -19,7 +19,7 @@ def handle_extend_request(user_id, borrow_id=None):
 
     # === Case 1: Initial view: show loans to choose ===
     if borrow_id is None:
-        success, active_loans = get_loan_history(matric, active_only=True, limit=25)
+        success, active_loans = get_loan_history_by_student(matric, active_only=True, limit=25)
         if not success:
             return {
                 "type": "text",
