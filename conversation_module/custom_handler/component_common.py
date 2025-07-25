@@ -9,7 +9,8 @@ def show_welcome():
         [InlineKeyboardButton("📚 Borrow", callback_data="intent_borrow")],
         [InlineKeyboardButton("🔁 Return", callback_data="intent_return")],
         [InlineKeyboardButton("🔍 Search", callback_data="intent_search")],
-        [InlineKeyboardButton("📖 Loan Record", callback_data="intent_loan")]
+        [InlineKeyboardButton("📖 Loan Record", callback_data="intent_loan")],
+        [InlineKeyboardButton("🏫 Library Rules FAQ", callback_data="intent_faq")]
     ]
     return {
         "type": "buttons",

@@ -3,6 +3,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from conversation_module.custom_handler.component_borrow import handle_borrow_auth, handle_confirm_borrow
 from conversation_module.custom_handler.component_loanrecord import handle_loan_auth, handle_confirm_loan
 from conversation_module.custom_handler.component_search import handle_search_book,handle_search_book_title, handle_search_book_author
+from conversation_module.custom_handler.component_faq import handle_faq, handle_book_borrow_rules, handle_book_return_rules, handle_overdue_rules, handle_lost_damage_rules
 from conversation_module.custom_handler.component_common import show_welcome
 from conversation_module.custom_handler.component_photo import handle_photo as handle_photo_component
 
@@ -13,6 +14,20 @@ class CustomHandler:
         self.user_state = {}
 
     def handle_request(self, text: str, user_id: str):
+        # Initialize user state if not present
+        self.user_state[user_id] = self.user_state.get(user_id, {})
+        
+        # Check if awaiting input
+        if self.user_state[user_id].get("awaiting_input"):
+            search_mode = self.user_state[user_id].get("search_mode")
+            if search_mode == "title":
+                self.user_state[user_id]["awaiting_input"] = False
+                return handle_search_book_title(text, user_id, self.user_state)
+            elif search_mode == "author":
+                self.user_state[user_id]["awaiting_input"] = False
+                return handle_search_book_author(text, user_id, self.user_state)
+
+        # Proceed with Dialogflow intent detection
         df_response = self.dialogflow.raw_detect_intent(text, user_id)
         intent = df_response["intent"]
         params = df_response["parameters"]
@@ -41,10 +56,10 @@ class CustomHandler:
             return handle_search_book()
 
         if intent == "searchbook - title - confirm":
-            return handle_search_book_title(output_params)
+            return handle_search_book_title(output_params, user_id, self.user_state)
         
         if intent == "searchbook - author - confirm":
-            return handle_search_book_author(output_params)
+            return handle_search_book_author(output_params, user_id, self.user_state)
 
         return {
             "type": "text",
@@ -73,11 +88,33 @@ class CustomHandler:
             return self.handle_request("loanrecord", user_id)
         
         if callback_data == "search_book_title":
-            return self.handle_request("search book via book title", user_id)
+            self.user_state[user_id] = self.user_state.get(user_id, {})
+            self.user_state[user_id]["awaiting_input"] = True
+            self.user_state[user_id]["search_mode"] = "title"
+            return {
+                "type": "text",
+                "text": "Got! Please type the book title you’d like to search for. 😊"
+            }
         elif callback_data == "search_book_author":
-            return self.handle_request("search book via book author", user_id)
+            self.user_state[user_id] = self.user_state.get(user_id, {})
+            self.user_state[user_id]["awaiting_input"] = True
+            self.user_state[user_id]["search_mode"] = "author"
+            return {
+                "type": "text",
+                "text": "Got it! Please type the author name you’d like to search for. 😊"
+            }
         
-
+        if callback_data == "intent_faq":
+            return handle_faq()
+        elif callback_data == "book_borrow_rules":
+            return handle_book_borrow_rules()
+        elif callback_data == "book_return_rules":
+            return handle_book_return_rules()
+        elif callback_data == "overdue_rules":
+            return handle_overdue_rules()
+        elif callback_data == "lost_damage_rules":
+            return handle_lost_damage_rules()
+        
         return {
             "type": "text",
             "text": "Sorry, I didn't understand that button action."
@@ -85,4 +122,6 @@ class CustomHandler:
     
     def handle_photo(self, file_path: str, user_id: str):
         return handle_photo_component(file_path, user_id, self.user_state)
+'''
 
+'''

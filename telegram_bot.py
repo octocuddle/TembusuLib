@@ -3,6 +3,7 @@ from typing import Final
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from telegram import InlineKeyboardMarkup
+from notification.due_date_notifier import start_scheduler
 import os
 from conversation_module import get_conversation_handler  # Import the factory function
 
@@ -98,6 +99,9 @@ def start_bot(service_provider: str):
     app.add_handler(CallbackQueryHandler(handle_callback))
     
     app.add_error_handler(error)
+
+    # Activate scheduler for due soon book reminder
+    start_scheduler()
 
     # Polls the bot
     print('Polling...')
