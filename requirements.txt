@@ -6,5 +6,3 @@ pyzbar==0.1.9
 Requests==2.32.3
 google-cloud-dialogflow
 google.cloud
-apscheduler
-pytz
