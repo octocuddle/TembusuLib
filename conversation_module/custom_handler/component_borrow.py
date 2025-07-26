@@ -79,7 +79,7 @@ def handle_confirm_borrow(user_id: str, user_state: dict):
     if not success:
         return {
             "type": "text",
-            "text": f"❌ Borrow failed: {result}. Please contact the admin."
+            "text": f"❌ Borrow failed: {result}. Please contact the @LibraryAdmin."
         }
     print(f'\n Borrow successful: {result}\n')
 
