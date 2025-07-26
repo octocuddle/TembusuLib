@@ -17,17 +17,17 @@ def validate_student_by_telegram_id(telegram_id: str) -> tuple[bool, Union[dict,
         if response.status_code == 200:
             students = response.json()
             if not students:
-                return False, "You're not registered. Please contact the admin at admin@email.com."
+                return False, "You're not registered. Please contact the library admin at @LibraryAdminEmail."
 
             student_data = students[0]  # Take the first match 
 
             if student_data.get("status") == "active":
                 return True, student_data
             else:
-                return False, "You are not an active student and could not use the library service. Please contact the admin at admin@email.com."
+                return False, "You are not an active student and could not use the library service. Please contact the library admin at @LibraryAdminEmail."
 
         elif response.status_code == 404:
-            return False, "You're not registered. Please contact the admin at admin@email.com."
+            return False, "You're not registered. Please contact the library admin at @LibraryAdminEmail."
         else:
             return False, f"Unexpected error from backend: {response.status_code}"
 

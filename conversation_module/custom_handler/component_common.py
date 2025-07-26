@@ -19,3 +19,13 @@ def show_welcome():
         "text": welcome_message,
         "buttons": keyboard
     }
+
+def expired_welcome_keyboard():
+    expired_keyboard = [
+        [InlineKeyboardButton("📚 Borrow", callback_data="expired_disabled")],
+        [InlineKeyboardButton("⏪️ Return", callback_data="expired_disabled")],
+        [InlineKeyboardButton("⏳ Extend Loan", callback_data="expired_disabled")],
+        [InlineKeyboardButton("📖 Loan Record", callback_data="expired_disabled")],
+        [InlineKeyboardButton("🔍 Search Books", callback_data="expired_disabled")],
+    ]
+    return InlineKeyboardMarkup(expired_keyboard)

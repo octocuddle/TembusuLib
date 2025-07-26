@@ -111,7 +111,7 @@ def start_bot(service_provider: str):
         user_id = str(query.from_user.id)
         data = query.data
 
-        response = conversation_handler.handle_callback(data, user_id)
+        response = await conversation_handler.handle_callback(query, user_id)
         print(f'[CALLBACK] From @{query.from_user.username or query.from_user.first_name} (ID: {user_id}) clicked: {data}')
 
         if isinstance(response, list):

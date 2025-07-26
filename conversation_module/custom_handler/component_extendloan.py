@@ -5,7 +5,7 @@ from utils.db_extend_loan import extend_loan
 from utils.date_parser import pretty_date
 
 
-def handle_extend_request(user_id, borrow_id=None):
+async def handle_extend_request(user_id, borrow_id=None):
     student_info = authenticated_users.get(user_id)
 
     if not student_info:
@@ -83,10 +83,10 @@ def handle_extend_request(user_id, borrow_id=None):
         new_due = result.get("due_date")[:10]
         return {
             "type": "text",
-            "text": f"✅ Successfully extended *{book}*.\nNew due date: *{new_due}*"
+            "text": f"✅ Successfully extended\n📖 {book}.\nExtended due date: {new_due}"
         }
     else:
         return {
             "type": "text",
-            "text": f"❌ Extension failed:\n{result}"
+            "text": f"❌ Extension failed:\n{result}\n\nUse Menu to continue accesssing library services."
         }

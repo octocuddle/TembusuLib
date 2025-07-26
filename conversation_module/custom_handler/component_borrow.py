@@ -1,6 +1,6 @@
 # conversation_module/custom_handler/component_borrow.py
 
-from telegram import InlineKeyboardButton
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from utils.qr_decoder import decode_qr
 from utils.db_book_validator import get_book_by_qr
 from utils.db_add_borrow import borrow_book
@@ -13,7 +13,7 @@ def start_borrow_flow(user_id: str, user_state: dict, fulfillment_text: str):
     print(f"[STATE] Set {user_id} stage to borrow_waiting_qr")
     return {
         "type": "text",
-        "text": fulfillment_text or "📸 Please submit a photo of the book QR code."
+        "text": "Your request to borrow is received.\n\n📸 Please submit a photo of the QR code at the back of the book, so that I can process your request."
     }
 
 def handle_borrow_photo(file_path: str, user_id: str, user_state: dict):
@@ -52,6 +52,13 @@ def handle_borrow_photo(file_path: str, user_id: str, user_state: dict):
             [InlineKeyboardButton("❌ No", callback_data="confirm_borrow_no")]
         ]
     }
+
+def expired_confirm_borrow_keyboard():
+    expired_keyboard = [
+        [InlineKeyboardButton("✅ Yes", callback_data="expired_disabled")],
+        [InlineKeyboardButton("❌ No", callback_data="expired_disabled")]
+    ]
+    return InlineKeyboardMarkup(expired_keyboard)
 
 def handle_confirm_borrow(user_id: str, user_state: dict):
     book_info = user_state.get(user_id, {}).get("book_info")

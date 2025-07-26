@@ -50,7 +50,7 @@ def handle_return_book_photo(file_path: str, user_id: str, user_state: dict):
             "text": (
                 "📖 Book verified under your account.\n"
                 f"Book Shelf: {book_info.get('location_name')}\n\n"
-                "✅ Please place the book on the correct shelf and then submit a photo of the location QR code."
+                "📸 Please place the book on the correct shelf and then submit a photo of the location QR code."
             )
         }
 
@@ -63,8 +63,8 @@ def handle_return_book_photo(file_path: str, user_id: str, user_state: dict):
             f"Book Shelf: {book_info.get('location_name')}\n"
         ),
         "buttons": [
-            [InlineKeyboardButton("✅ Yes, return on behalf", callback_data="return_proxy_yes")],
-            [InlineKeyboardButton("❌ No, I’ll tell them", callback_data="return_proxy_no")]
+            [InlineKeyboardButton("✅ Yes", callback_data="return_proxy_yes")],
+            [InlineKeyboardButton("❌ No", callback_data="return_proxy_no")]
         ]
     }
 
@@ -105,11 +105,11 @@ def handle_return_location_photo(file_path: str, user_id: str, user_state: dict)
             f"✅ Book returned successfully:\n"
             f"📖 {book_info.get('book_title')}\n"
             f"📍 Returned at location: {book_info.get("location_name")}\n\n"
-            "Thank you! 📚 Use Menu to continue accessing library services."
+            "Use Menu to continue accessing library services."
         )        
     }
 
-def handle_return_proxy_decision(user_id: str, user_state: dict, choice: str):
+'''def handle_return_proxy_decision(user_id: str, user_state: dict, choice: str):
     if choice == "yes":
         user_state[user_id]["stage"] = "return_waiting_location_qr"
         return {
@@ -126,4 +126,29 @@ def handle_return_proxy_decision(user_id: str, user_state: dict, choice: str):
                 "👍 No problem. Please remind the borrower to return it themselves.\n"
                 "Use the Menu to continue accessing library services."
             )
+        }'''
+
+def handle_return_proxy_decision(user_id: str, user_state: dict, choice: str):
+    if choice == "yes":
+        user_state[user_id]["stage"] = "return_waiting_location_qr"
+        return {
+            "type": "text",
+            "text": (
+                "👍 Thank you! Please place the book back on the correct shelf and then submit a photo of the location QR code."
+            )
         }
+    else:
+        book_info = user_state.get(user_id, {}).get("book_info")
+        user_state[user_id]["stage"] = "return_waiting_location_qr"
+
+        return {
+            "type": "text",
+            "text": (
+                "📸 Please still place the book back on the correct shelf and then submit a photo of the location QR code to complete the return process.\n\n"
+                f"Book Shelf: {book_info.get('location_name')}\n\n"
+                "📨 Since you're returning this on behalf of someone else, kindly message the library admin on Telegram to notify them.\n\n"
+                "🔔 Admin Contact: @LibraryAdmin\n"
+                "Thank you for your help!"
+            )
+        }
+
