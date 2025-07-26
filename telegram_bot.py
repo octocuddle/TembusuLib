@@ -3,6 +3,7 @@ from typing import Final
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from telegram import InlineKeyboardMarkup
+from notification.due_date_notifier import start_scheduler
 from conversation_module.custom_handler.component_common import show_welcome
 from utils.db_telegramid_validator import validate_student_by_telegram_id
 from utils.auth_helpers import get_authenticated_user, authenticated_users
@@ -16,8 +17,12 @@ if not TOKEN:
 
 BOT_USERNAME: Final = '@TembusuLib_bot'
 
+
+print("Credential path:", os.getenv("GOOGLE_APPLICATION_CREDENTIALS"))
+
 # Track user auth sessions: {telegram_id: student_data}
 authenticated_users = {}
+
 
 # Initialize ConversationHandler based on service provider
 def start_bot(service_provider: str):
@@ -114,6 +119,7 @@ def start_bot(service_provider: str):
         response = await conversation_handler.handle_callback(query, user_id)
         print(f'[CALLBACK] From @{query.from_user.username or query.from_user.first_name} (ID: {user_id}) clicked: {data}')
 
+
         if isinstance(response, list):
             for res in response:
                 await _send_response(query.message, res)
@@ -130,6 +136,7 @@ def start_bot(service_provider: str):
             reply_markup = InlineKeyboardMarkup(res["buttons"])
             await message.reply_text(res["text"], reply_markup=reply_markup)
             
+
     # Error handler
     async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(f'Update {update} cause error {context.error}')
@@ -143,6 +150,9 @@ def start_bot(service_provider: str):
     app.add_handler(CallbackQueryHandler(handle_callback))
     
     app.add_error_handler(error)
+
+    # Activate scheduler for due soon book reminder
+    start_scheduler()
 
     # Polls the bot
     print('Polling...')

@@ -6,7 +6,6 @@ import os
 def get_loan_history_by_student(matric: str, active_only=True, limit=25):
 
     base_url = os.getenv("FASTAPI_BASE_URL", "http://localhost:8000")  # default fallback
-    
     try:
         response = requests.get(
             f"{base_url}/api/v1/borrowing/student/{matric}?active_only={str(active_only).lower()}&skip=0&limit={limit}",
