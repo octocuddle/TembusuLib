@@ -14,9 +14,12 @@ def handle_loan_request(user_id: str):
             "type": "text",
             "text": "❌ You are not authenticated. Please reconnect to continue."
         }
+    
+    print(f"[DEBUG] student info in handle_loan_request: {student_info}\n\n")
+
     name = student_info.get("full_name")
     matric = student_info.get("matric_number")
-    messages = [{"type": "text", "text": "Your request to retrieve your loan record is received.\n"}]
+    lines = []
 
     # Fetch all active loans once (needed for both purposes)
     success_active, active_loans = get_loan_history_by_student(matric, active_only=True, limit=25)
@@ -27,6 +30,7 @@ def handle_loan_request(user_id: str):
         }
 
     active_loans.sort(key=lambda r: r.get("borrow_id", 0), reverse=True)
+    print(f"sorted active_loans: {active_loans}\n\n")
 
     # Display active loan
     if active_loans:
@@ -44,21 +48,24 @@ def handle_loan_request(user_id: str):
             for r in current:
                 lines.append(_format_loan_record(r))
 
-        messages.append({"type": "text", "text": "\n".join(lines)})
+        # messages.append({"type": "text", "text": "\n".join(lines)})
     else:
-        messages.append({"type": "text", "text": f"📭 No active loans found for {matric}."})
+        lines = [f"📭 No active loans found for {matric}."]
+        #messages.append({"type": "text", "text": f"📭 No active loans found for {matric}."})
+
+    lines.append("Would you like to view your past loan records?")
 
     buttons = [
         [InlineKeyboardButton("✅ Yes", callback_data="loanrecord_past_yes")],
         [InlineKeyboardButton("❌ No", callback_data="loanrecord_past_no")]
     ]
-    messages.append({
-        "type": "buttons",
-        "text": "Would you like to view your past loan records?",
-        "buttons": buttons
-    })
+    print(f"final lines: {lines}\n\n")
 
-    return messages
+    return {
+        "type": "buttons",
+        "text": "\n".join(lines),
+        "buttons": buttons
+    }
 
 def handle_loan_response(user_id: str, choice: str):
     student_info = authenticated_users.get(user_id)
@@ -70,7 +77,7 @@ def handle_loan_response(user_id: str, choice: str):
 
     name = student_info.get("full_name")
     matric = student_info.get("matric_number")
-    messages = []
+    lines = []
 
     success_active, active_loans = get_loan_history_by_student(matric, active_only=True, limit=25)
     if not success_active:
@@ -103,9 +110,10 @@ def handle_loan_response(user_id: str, choice: str):
             lines = [f"{name} ({matric})'s 📚 Past Loans (last 6 months):"]
             for r in past_recent:
                 lines.append(_format_loan_record(r))
-            messages.append({"type": "text", "text": "\n".join(lines)})
+            # messages.append({"type": "text", "text": "\n".join(lines)})
         else:
-            messages.append({"type": "text", "text": "📭 No recent past loans found."})
+            # messages.append({"type": "text", "text": "📭 No recent past loans found."})
+            lines = ["📭 No recent past loans found."]
 
     # === Extend Option if eligible ===
     extendable_loans = [r for r in active_loans if not r.get("is_overdue")]
@@ -115,18 +123,19 @@ def handle_loan_response(user_id: str, choice: str):
             [InlineKeyboardButton("✅ Yes", callback_data="loanrecord_extend_yes")],
             [InlineKeyboardButton("❌ No", callback_data="loanrecord_extend_no")]
         ]
-        messages.append({
+        lines.append("Would you like to extend any of your current eligible books?")
+        return {
             "type": "buttons",
-            "text": "Would you like to extend any of your current eligible books?",
+            "text": "\n".join(lines),
             "buttons": buttons
-        })
+        }
     elif not extendable_loans:
-        messages.append({
+        return {
             "type": "text",
             "text": "👌 Use Menu to continue accessing library services."
-        })
+        }
 
-    return messages
+    # return messages
 
 
 def _format_loan_record(record):

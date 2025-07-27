@@ -93,7 +93,7 @@ def start_bot(service_provider: str):
         else:
             text = message.text
             print(f'[TEXT] From @{username} (ID: {user_id}): "{text}"')
-            response = conversation_handler.handle_request(text, user_id)
+            response = await conversation_handler.handle_request(text, user_id)
 
         # Handle response
         if isinstance(response, str):

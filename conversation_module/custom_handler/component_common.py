@@ -28,5 +28,6 @@ def expired_welcome_keyboard():
         [InlineKeyboardButton("⏳ Extend Loan", callback_data="expired_disabled")],
         [InlineKeyboardButton("📖 Loan Record", callback_data="expired_disabled")],
         [InlineKeyboardButton("🔍 Search Books", callback_data="expired_disabled")],
+        [InlineKeyboardButton("🏫 Library Rules FAQ", callback_data="expired_disabled")]
     ]
     return InlineKeyboardMarkup(expired_keyboard)
