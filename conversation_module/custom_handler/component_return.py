@@ -5,6 +5,7 @@ from utils.db_book_validator import get_book_by_qr
 from utils.db_return_book import return_book
 from utils.auth_helpers import authenticated_users
 from utils.db_loan_history import get_loan_history_by_student, get_active_loan_by_qr_code
+from utils.db_location_validator import get_locationqr_by_id
 
 
 def start_return_flow(user_id: str, user_state: dict, fulfillment_text: str):
@@ -78,6 +79,26 @@ def handle_return_location_photo(file_path: str, user_id: str, user_state: dict)
     if not book_info or not student_info:
         return {"type": "text", "text": "❌ Missing session data. Please start again."}
 
+    # Fetch correct location info by ID
+    location_id = book_info.get("location_id")
+    success, location_info = get_locationqr_by_id(location_id)
+    if not success:
+        return {"type": "text", "text": f"❌ Failed to verify shelf: {location_info}"}
+
+    expected_qr = location_info.get("location_qr_code")
+    expected_name = location_info.get("location_name")
+
+    if decoded_location != expected_qr:
+        return {
+            "type": "text",
+            "text": (
+                f"❌ Incorrect shelf or QR code.\n\n"
+                f"The correct location for this book is:\n"
+                f"📍 {expected_name}\n\n"
+                "📸 Please take a photo of the correct location QR code to complete the return."
+            )
+        }
+    
     # Get active loans to find the borrow_id (even if it's not their own)
     success, matched_loan = get_active_loan_by_qr_code(book_info["qr_code"])
     if not success:
@@ -93,11 +114,12 @@ def handle_return_location_photo(file_path: str, user_id: str, user_state: dict)
         
     success, result = return_book(borrow_id=borrow_id)
     user_state.pop(user_id, None)
+
     
 
     if not success:
         return {"type": "text", "text": f"❌ Return failed: {result}"}
-
+    print(f"book info: {book_info}")
     return {
         "type": "text",
 
