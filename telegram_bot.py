@@ -85,8 +85,20 @@ def start_bot(service_provider: str):
         if message.photo:
             print(f"[PHOTO] From @{username} (ID: {user_id}) - Received image")
 
-            file = await message.photo[-1].get_file()
-            file_path = await file.download_to_drive()
+            photo_size = message.photo[-1]  # Highest resolution photo
+            file = await photo_size.get_file()
+
+            # Ensure folder exists
+            download_dir = "telegram_photo"
+            os.makedirs(download_dir, exist_ok=True)
+
+            # Build full file path
+            file_name = f"{file.file_id}.jpg"
+            file_path = os.path.join(download_dir, file_name)
+
+            # Download to that path
+            await file.download_to_drive(custom_path=file_path)
+
             print(f"[PHOTO] From @{username} (ID: {user_id}) → File saved to: {file_path}")
             response = conversation_handler.handle_photo(file_path, user_id)
 
