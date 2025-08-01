@@ -1,16 +1,48 @@
 # conversation_module/custom_handler/component_borrow.py
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton
 from utils.qr_decoder import decode_qr
 from utils.db_book_validator import get_book_by_qr
 from utils.db_add_borrow import borrow_book
 from utils.auth_helpers import authenticated_users
 from utils.date_parser import pretty_date
+from utils.db_loan_history import get_loan_history_by_student
+import os
+
+MAX_BORROW_LIMIT = int(os.getenv("MAX_BORROW_LIMIT"))
 
 def start_borrow_flow(user_id: str, user_state: dict, fulfillment_text: str):
     user_state[user_id] = user_state.get(user_id, {})
+    student_info = authenticated_users.get(user_id)
+
+    if not student_info:
+        return {
+            "type": "text",
+            "text": "❌ You are not authenticated. Please use /start to begin."
+        }
+
+    matric = student_info.get("matric_number")
+    success, active_loans = get_loan_history_by_student(matric)
+
+    if not success:
+        return {
+            "type": "text",
+            "text": f"⚠️ Unable to check your borrow record right now.\n\nPlease try again later or contact @LibraryAdmin.\n\nError: {active_loans}"
+        }
+
+    if len(active_loans) >= MAX_BORROW_LIMIT:
+        return {
+            "type": "text",
+            "text": (
+                f"📚 You have already borrowed {len(active_loans)} book(s), which is the maximum allowed.\n\n"
+                "❗ Please return a book before borrowing a new one.\n"
+                "You can check your loan record using the menu."
+            )
+        }
+
     user_state[user_id]["stage"] = "borrow_waiting_qr"
     print(f"[STATE] Set {user_id} stage to borrow_waiting_qr")
+
     return {
         "type": "text",
         "text": "Your request to borrow is received.\n\n📸 Please submit a photo of the QR code at the back of the book, so that I can process your request."
@@ -53,13 +85,6 @@ def handle_borrow_photo(file_path: str, user_id: str, user_state: dict):
         ]
     }
 
-def expired_confirm_borrow_keyboard():
-    expired_keyboard = [
-        [InlineKeyboardButton("✅ Yes", callback_data="expired_disabled")],
-        [InlineKeyboardButton("❌ No", callback_data="expired_disabled")]
-    ]
-    return InlineKeyboardMarkup(expired_keyboard)
-
 def handle_confirm_borrow(user_id: str, user_state: dict):
     book_info = user_state.get(user_id, {}).get("book_info")
     student_info = authenticated_users.get(user_id)
@@ -77,9 +102,10 @@ def handle_confirm_borrow(user_id: str, user_state: dict):
     user_state.pop(user_id, None)
 
     if not success:
+        user_state.pop(user_id, None)
         return {
             "type": "text",
-            "text": f"❌ Borrow failed: {result}. Please contact the @LibraryAdmin."
+            "text": f"❌ Borrow failed: {result}. \n\nUse menu to start a new request. \nIf you encounter further problem, please contact the @LibraryAdmin."
         }
     print(f'\n Borrow successful: {result}\n')
 

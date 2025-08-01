@@ -5,10 +5,10 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 from telegram import InlineKeyboardMarkup
 from notification.due_date_notifier import start_scheduler
 from conversation_module.custom_handler.component_common import show_welcome
-from utils.db_telegramid_validator import validate_student_by_telegram_id
-from utils.auth_helpers import get_authenticated_user, authenticated_users
+from utils.auth_helpers import get_authenticated_user
 import os
 from conversation_module import get_conversation_handler  # Import the factory function
+from utils.photo_cleaning import clean_old_photos
 
 # Read environment variables
 TOKEN: Final = os.getenv('TELEGRAM_TOKEN')
@@ -17,12 +17,8 @@ if not TOKEN:
 
 BOT_USERNAME: Final = '@TembusuLib_bot'
 
-
-print("Credential path:", os.getenv("GOOGLE_APPLICATION_CREDENTIALS"))
-
 # Track user auth sessions: {telegram_id: student_data}
 authenticated_users = {}
-
 
 # Initialize ConversationHandler based on service provider
 def start_bot(service_provider: str):
@@ -165,6 +161,9 @@ def start_bot(service_provider: str):
 
     # Activate scheduler for due soon book reminder
     start_scheduler()
+
+    # Start cleanup scheduler when bot starts
+    clean_old_photos()
 
     # Polls the bot
     print('Polling...')

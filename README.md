@@ -20,14 +20,28 @@ conversation_module/
     ├── core.py
     ├── component_borrow.py
     ├── component_common.py
+    ├── component_extendloan.py
+    ├── component_faq.py # contributed by Ruofan
     ├── component_loanrecord.py
-    └── component_photo.py
+    ├── component_return.py
+    └── component_search.py # contributed by Ruofan
+
+notification/
+└── due_date_notifier.py # contributed by Ruofan
 
 utils/
+├── auth_helpers.py
+├── date_parser.py
 ├── db_add_borrow.py
 ├── db_book_validator.py
+├── db_extend_loan.py
 ├── db_loan_history.py
+├── db_location_validator.py
+├── db_return_book.py
+├── db_search_book.py
 ├── db_student_validator.py
+├── db_telegramid_validator.py
+├── photo_cleaning.py
 └── qr_decoder.py
 ```
 
@@ -49,7 +63,8 @@ Backend module will connect to DB for information validation, creation, update e
 - utils/
     - This is the modules handles some db CRUD and some additional activities like QR code scanning.
 
-- Maybe more backend services will be provided
+- notification/
+    - This is the module that provide notification to user (student) and remind them to return books.
 
 ## Dependencies and how to run the code
 
@@ -88,6 +103,9 @@ export LEX_BOT_ID='xxx'
 export LEX_BOT_ALIAS_ID='xxx'
 export GOOGLE_APPLICATION_CREDENTIALS="/Users/.../.../xxx.json"
 export DIALOGFLOW_PROJECT_ID="xxx"
+export PHOTO_CLEANING_INTERVAL='xxx'
+export MAX_FILE_AGE_SECONDS='xxx'
+export MAX_BORROW_LIMIT='xxx'
 ```
 
 # Docker-related setup
@@ -102,4 +120,5 @@ We also need to include the Dockerfile under the folder where the project runs.
 |2025 Mar 16| <li> Added validation of MatricNumber (to follow format "letter-7digits-letter") and</li><li> book name (from a book list that's set in self.bookList)</li>|
 |2025 May 16| Updated the utility backend service and how to run code.|
 |2025 May 20| Updated the docker related content.|
+|2025 Aug 01| Updated conversation flows according to user requirement. Included some chores like cleaning photos submitted by users. Included the code contribution by Ruofan (the notification funciton, conversation for faq and search).|
 

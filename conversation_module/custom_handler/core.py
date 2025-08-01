@@ -7,8 +7,7 @@ from conversation_module.custom_handler.component_borrow import (
     start_borrow_flow,
     handle_borrow_photo,
     handle_confirm_borrow,
-    handle_cancel_borrow,
-    expired_confirm_borrow_keyboard
+    handle_cancel_borrow
 )
 from conversation_module.custom_handler.component_return import (
     start_return_flow,
@@ -18,7 +17,7 @@ from conversation_module.custom_handler.component_return import (
 )
 from conversation_module.custom_handler.component_loanrecord import handle_loan_request, handle_loan_response
 from conversation_module.custom_handler.component_extendloan import handle_extend_request
-from conversation_module.custom_handler.component_common import show_welcome, expired_welcome_keyboard
+from conversation_module.custom_handler.component_common import show_welcome, expired_welcome_keyboard, expired_confirm_keyboard
 from conversation_module.custom_handler.component_search import handle_search_book,handle_search_book_title, handle_search_book_author
 from conversation_module.custom_handler.component_faq import handle_faq, handle_book_borrow_rules, handle_book_return_rules, handle_overdue_rules, handle_lost_damage_rules
 
@@ -100,7 +99,7 @@ class CustomHandler:
         if callback_data.startswith("intent_"):
             await query.edit_message_reply_markup(reply_markup=expired_welcome_keyboard())
         elif callback_data.startswith(("confirm_borrow_", "return_proxy_", "loanrecord_extend_", "loanrecord_past_")):
-            await query.edit_message_reply_markup(reply_markup=expired_confirm_borrow_keyboard())
+            await query.edit_message_reply_markup(reply_markup=expired_confirm_keyboard())
 
 
         if callback_data == "intent_borrow":

@@ -29,7 +29,7 @@ async def handle_extend_request(user_id, borrow_id=None):
         if not active_loans:
             return {
                 "type": "text",
-                "text": f"📭 No active loans to extend for {matric}."
+                "text": f"📭 No active loan to extend for {matric}.\n\nUse Menu to access library services."
             }
 
         overdue_loans = [r for r in active_loans if r.get("is_overdue")]

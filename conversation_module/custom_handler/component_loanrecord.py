@@ -130,9 +130,10 @@ def handle_loan_response(user_id: str, choice: str):
             "buttons": buttons
         }
     elif not extendable_loans:
+        lines.append("Use Menu to continue accessing library services.")
         return {
             "type": "text",
-            "text": "👌 Use Menu to continue accessing library services."
+            "text": "\n".join(lines)
         }
 
     # return messages

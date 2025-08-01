@@ -31,3 +31,11 @@ def expired_welcome_keyboard():
         [InlineKeyboardButton("🏫 Library Rules FAQ", callback_data="expired_disabled")]
     ]
     return InlineKeyboardMarkup(expired_keyboard)
+
+
+def expired_confirm_keyboard():
+    expired_keyboard = [
+        [InlineKeyboardButton("✅ Yes", callback_data="expired_disabled")],
+        [InlineKeyboardButton("❌ No", callback_data="expired_disabled")]
+    ]
+    return InlineKeyboardMarkup(expired_keyboard)
