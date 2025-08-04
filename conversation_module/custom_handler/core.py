@@ -73,7 +73,7 @@ class CustomHandler:
             return handle_loan_request(user_id)
         
         elif intent == "extendloan":
-            return await handle_extend_request(user_id)
+            return await handle_extend_request(user_id, self.user_state)
         
         elif intent == "searchbook":
             return handle_search_book()
@@ -118,7 +118,7 @@ class CustomHandler:
             borrow_id = int(callback_data.split("_")[-1])
             # Remove keyboard immediately
             await query.edit_message_reply_markup(reply_markup=None)
-            return await handle_extend_request(user_id, borrow_id)
+            return await handle_extend_request(user_id, self.user_state, borrow_id)
         
         elif callback_data == "intent_search":
             return await self.handle_request("search", user_id)
@@ -170,7 +170,7 @@ class CustomHandler:
         elif callback_data == "loanrecord_past_yes":
             return handle_loan_response(user_id, choice="past")
         elif callback_data == "loanrecord_extend_yes":
-            return await handle_extend_request(user_id)
+            return await handle_extend_request(user_id, self.user_state)
         elif callback_data == "loanrecord_extend_no":
             return {
                 "type": "text",

@@ -7,6 +7,9 @@ from utils.db_add_borrow import borrow_book
 from utils.auth_helpers import authenticated_users
 from utils.date_parser import pretty_date
 from utils.db_loan_history import get_loan_history_by_student
+from utils.semester_calendar import get_period, get_days_until_period_end,get_next_semester_start
+from utils.date_parser import pretty_date
+from datetime import date, datetime
 import os
 
 MAX_BORROW_LIMIT = int(os.getenv("MAX_BORROW_LIMIT"))
@@ -21,6 +24,49 @@ def start_borrow_flow(user_id: str, user_state: dict, fulfillment_text: str):
             "text": "❌ You are not authenticated. Please use /start to begin."
         }
 
+
+    today = date.today()
+    period = get_period(today)
+
+    if not period:
+        return {
+            "type": "text",
+            "text": "📚 The library is closed. No valid semester or holiday found in config."
+        }
+    
+    if "Holiday" in period["name"]:
+        next_mmdd = get_next_semester_start(today)
+        if next_mmdd:
+            next_start_str = datetime.strptime(next_mmdd, "%m-%d").strftime("%-d %B")  # → "1 August"
+        else:
+            next_start_str = "the next semester"
+    
+        return {
+            "type": "text",
+            "text": (
+                "📚 The library is currently closed for maintenance during the break.\n"
+                f"📆 Holiday period: {pretty_date(period['start'])} to {pretty_date(period['end'])}.\n"
+                f"Please visit us again next semester, starting from {next_start_str}."
+            )
+        }
+    
+    remaining_days, sem_end = get_days_until_period_end(today)
+    if remaining_days == 0:
+        next_mmdd = get_next_semester_start(today)
+        if next_mmdd:
+            next_start_str = datetime.strptime(next_mmdd, "%m-%d").strftime("%-d %B")  # → "1 August"
+        else:
+            next_start_str = "the next semester"
+
+        return {
+            "type": "text",
+            "text": (
+                f"📚 Today is the last day of the current semester (ends on {sem_end}).\n"
+                "Borrowing is not allowed on the semester end date due to return logistics.\n"
+                f"Please visit us again next semester, starting from {next_start_str}."
+            )
+        }
+
     matric = student_info.get("matric_number")
     success, active_loans = get_loan_history_by_student(matric)
 
@@ -29,6 +75,7 @@ def start_borrow_flow(user_id: str, user_state: dict, fulfillment_text: str):
             "type": "text",
             "text": f"⚠️ Unable to check your borrow record right now.\n\nPlease try again later or contact @LibraryAdmin.\n\nError: {active_loans}"
         }
+    
 
     if len(active_loans) >= MAX_BORROW_LIMIT:
         return {
@@ -42,6 +89,8 @@ def start_borrow_flow(user_id: str, user_state: dict, fulfillment_text: str):
 
     user_state[user_id]["stage"] = "borrow_waiting_qr"
     print(f"[STATE] Set {user_id} stage to borrow_waiting_qr")
+    # Save max loan days in state for later use
+    user_state[user_id]["loan_days"] = min(14, remaining_days)
 
     return {
         "type": "text",
@@ -64,10 +113,8 @@ def handle_borrow_photo(file_path: str, user_id: str, user_state: dict):
         }
 
     # Save decoded book info temporarily in state
-    user_state[user_id] = {
-        "stage": "borrow_confirm",
-        "book_info": book_info
-    }
+    user_state[user_id]["stage"] = "borrow_confirm"
+    user_state[user_id]["book_info"] = book_info
 
     return {
         "type": "confirm",
@@ -96,7 +143,9 @@ def handle_confirm_borrow(user_id: str, user_state: dict):
         }
 
     matric = student_info.get("matric_number")
-    success, result = borrow_book(copy_id=book_info["copy_id"], matric_number=matric)
+    loan_days = user_state.get(user_id, {}).get("loan_days", 14)
+    
+    success, result = borrow_book(copy_id=book_info["copy_id"], matric_number=matric, loan_days=loan_days)
 
     # Clean up user state
     user_state.pop(user_id, None)
@@ -114,17 +163,22 @@ def handle_confirm_borrow(user_id: str, user_state: dict):
     student_matric = result.get("matric_number", "N/A")
     due_date = pretty_date(result.get("due_date", ""))
 
+    lines = [
+            f"👤 {student_name} ({student_matric})",
+            f"✅ You have successfully borrowed the following book:\n",
+            f"📖 Title: {book_info.get("book_title", "Untitled")}",
+            f"✍️ Author: {book_info.get("book_author", "Unknown Author")}",
+            f"🏷️ ISBN: {book_info.get("book_isbn", "N/A")}",
+            f"📅 Due date: {due_date}\n",
+            f"Use Menu to continue accessing library services. \nOtherwise, have a nice day."
+    ]
+
+    if loan_days<14:
+        lines.append(f"\n⚠️ This book is due in {loan_days} days as semester is ending. Please return it before semester end.")
+
     return {
         "type": "text",
-        "text": (
-            f"👤 {student_name} ({student_matric})\n"
-            f"✅ You have successfully borrowed the following book:\n\n"
-            f"📖 Title: {book_info.get("book_title", "Untitled")}\n"
-            f"✍️ Author: {book_info.get("book_author", "Unknown Author")}\n"
-            f"🏷️ ISBN: {book_info.get("book_isbn", "N/A")}\n"
-            f"📅 Due date: {due_date}\n\n"
-            f"Use Menu to continue accessing library services. \nOtherwise, have a nice day."
-        )
+        "text": "\n".join(lines)
     }
 
 def handle_cancel_borrow(user_id: str, user_state: dict):

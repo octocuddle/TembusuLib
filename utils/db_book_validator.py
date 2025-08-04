@@ -33,7 +33,7 @@ def get_book_by_qr(qr_code: str, mode: str = "borrow") -> tuple[bool, dict | str
                 )
         elif mode == "return":
             if copy_data.get("status") != "borrowed":
-                return False, f"⚠️ This book is not currently borrowed, so it cannot be returned."
+                return False, f"This book is not currently borrowed, so it cannot be returned. \nSubmit a photo of the QR code of a borrowed book, or use Menu to start a new library service request."
 
         # Continue to fetch full book details
         book_id = copy_data.get("book_id")
