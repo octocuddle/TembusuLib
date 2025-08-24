@@ -97,30 +97,34 @@ def send_reminder_message():
 
     # Send reminders for due-soon and overdue books (single message per user)
     for chat_id,records in due_soon_dict.items():
-        message_due_soon = [f"📚 Reminder: You have the following book(s) due soon. Please return them promptly!\n\n"]
+        message_due_soon = [f"📚 Reminder: You have the following book(s) due soon:\n\n"]
         for item in records:
             # Format borrow_date to dd/mm/yyyy
-            borrow_date = datetime.strptime(item["borrow_date"], "%Y-%m-%dT%H:%M:%SZ").strftime("%d/%m/%Y")
-            due_date = datetime.strptime(item["due_date"], "%Y-%m-%dT%H:%M:%SZ").strftime("%d/%m/%Y")
+            borrow_date = datetime.strptime(item["borrow_date"], "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d")
+            due_date = datetime.strptime(item["due_date"], "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d")
             message_due_soon.append (
-                f"Book title: {item['book_title']} \n"
-                # f"Book Author: {item['author']}"
-                f"Borrowed on {borrow_date}, due on {due_date}. \n\n"
+                f"• Book title: {item['book_title']}\n"
+                f"  Borrowed: {borrow_date}\n"
+                f"  Due: {due_date}\n"
             )
+        message_due_soon.append("\nPlease return due-soon books promptly!")
+
         message = "".join(message_due_soon).rstrip()
         send_telegram_message(chat_id, message)
 
     for chat_id,records in overdue_dict.items():
-        message_overdue = [f"⚠️ Warning: You have the following book(s) already overdue. Please return them soon to avoid additional charges!\n\n"]
+        message_overdue = [f"⚠️ Warning: You have the following book(s) already overdue:\n\n"]
         for item in records:
-            # Format borrow_date to dd/mm/yyyy
-            borrow_date = datetime.strptime(item["borrow_date"], "%Y-%m-%dT%H:%M:%SZ").strftime("%d/%m/%Y")
-            due_date = datetime.strptime(item["due_date"], "%Y-%m-%dT%H:%M:%SZ").strftime("%d/%m/%Y")
+            # Format borrow_date to yyyy-mm-dd
+            borrow_date = datetime.strptime(item["borrow_date"], "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d")
+            due_date = datetime.strptime(item["due_date"], "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d")
             message_overdue.append (
-                f"Book title: {item['book_title']} \n"
-                # f"Book Author: {item['author']}"
-                f"Borrowed on {borrow_date}, due on {due_date}. \n\n"
+                f"• Book title: {item['book_title']}\n"
+                f"  Borrowed: {borrow_date}\n"
+                f"  Due: {due_date}\n"
             )
+        message_overdue.append("\nPlease return overdue books soon to avoid additional charges.")
+
         message = "".join(message_overdue).rstrip()
         send_telegram_message(chat_id, message)
 
@@ -135,7 +139,7 @@ def start_scheduler():
     # Add job with cron trigger set to 10 AM SG time
     scheduler.add_job(
         send_reminder_message,
-        trigger=CronTrigger(hour=10, minute=00, timezone=sg_timezone)
+        trigger=CronTrigger(hour=10, minute=0, timezone=sg_timezone)
     )
     
     # Start the scheduler

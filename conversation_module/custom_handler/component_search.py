@@ -69,15 +69,16 @@ def handle_search_book_title(params, user_id=None, user_state=None):
             f"•Book Title: {title} \n  Call Number:{call_number}\n  Available Copies: {available_copies}\n  Location: {', '.join(locations) if locations else 'Not available'}\n"
         )
 
-    if available_copies > 0:
-        lines.append("Great, this book is available! 😊 \n\n Please find the book on the bookshelf using the location information and call number. \n\nTo borrow this book, just type 'borrow' to start the process.")
-    else:
-        lines.append("Sorry, this book has been borrowed by another student. Please come try again next time! 😔")
+        if available_copies == 0:
+            lines.append("Sorry, the searched book has been borrowed by another student. Please come try again next time! 😔")
+
+    lines.append("For available books, you can find the book on the bookshelf using the location information and call number. \n\nTo borrow this book, just click 'borrow' button to start the process.")
 
     return {
         "type": "text",
         "text": "\n".join(lines)
     }
+    
 
 
 def handle_search_book_author(params, user_id=None, user_state=None):
@@ -131,9 +132,9 @@ def handle_search_book_author(params, user_id=None, user_state=None):
             f"•Book Title: {title} \n  Call Number:{call_number}\n  Available Copies: {available_copies}\n  Location: {', '.join(locations) if locations else 'Not available'}\n"
         )
         if available_copies == 0:
-            lines.append("Sorry, this book has been borrowed by another student. Please come try again next time! 😔 \n")
+            lines.append("Sorry, the searched book has been borrowed by another student. Please come try again next time! 😔 \n")
 
-    lines.append("For available books, you can find the book on the bookshelf using the location information and call number. \n\nTo borrow books, just type 'borrow' to start the process.")
+    lines.append("For available books, you can find the book on the bookshelf using the location information and call number. \n\nTo borrow books, just click 'borrow' button to start the process.")
 
     return {
         "type": "text",
