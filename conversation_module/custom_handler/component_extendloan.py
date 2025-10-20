@@ -140,7 +140,7 @@ async def handle_extend_request(user_id, user_state: dict, borrow_id=None):
     
     if success:
         book = result.get("book_title")
-        new_due = result.get("due_date")[:10]
+        new_due = pretty_date(result.get("due_date"))
         return {
             "type": "text",
             "text": (

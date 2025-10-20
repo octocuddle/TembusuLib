@@ -13,7 +13,7 @@ def start_return_flow(user_id: str, user_state: dict, fulfillment_text: str):
     user_state[user_id]["stage"] = "return_waiting_book_qr"
     return {
         "type": "text",
-        "text": fulfillment_text or "📸 Please submit a photo of the book QR code."
+        "text": "Your request to return book is received.\n\n📸 Please submit a photo of the QR code at the back of the book, so that I can process your request."
     }
 
 def handle_return_book_photo(file_path: str, user_id: str, user_state: dict):

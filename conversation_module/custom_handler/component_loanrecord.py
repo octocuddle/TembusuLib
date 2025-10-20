@@ -84,7 +84,8 @@ def handle_loan_response(user_id: str, choice: str):
         active_loans = []
 
     if choice == "past":
-        success_past, past_loans = get_loan_history_by_student(matric, active_only=False, limit=100)
+        max_history_record = 31 #47 is the max tested on a short book title "The Great Gatsby"
+        success_past, past_loans = get_loan_history_by_student(matric, active_only=False, limit=max_history_record)
         if not success_past:
             return {
                 "type": "text",
@@ -107,7 +108,7 @@ def handle_loan_response(user_id: str, choice: str):
                     continue
 
         if past_recent:
-            lines = [f"{name} ({matric})'s 📚 Past Loans (last 6 months):"]
+            lines = [f"{name} ({matric})'s 📚 Past Loans (last 6 months, max {max_history_record-1} books):"]
             for r in past_recent:
                 lines.append(_format_loan_record(r))
             # messages.append({"type": "text", "text": "\n".join(lines)})
