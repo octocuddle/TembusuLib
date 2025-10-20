@@ -1,4 +1,4 @@
-# conversation_module/dialogflow_handler.py
+'''# conversation_module/dialogflow_handler.py
 from google.cloud import dialogflow_v2 as dialogflow
 import os
 
@@ -50,3 +50,4 @@ class DialogflowHandler:
                 "fulfillment_text": "Oops! Something went wrong on my end. Please try your request again, or contact our @LibraryAdmin on Telegram if you need immediate help.",
                 "confidence": 0
             }
+'''

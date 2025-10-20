@@ -1,6 +1,6 @@
 # conversation_module/custom_handler/core.py
 
-from ..dialogflow_handler import DialogflowHandler
+# from ..dialogflow_handler import DialogflowHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from conversation_module.custom_handler.component_borrow import (
@@ -25,7 +25,7 @@ from conversation_module.custom_handler.component_faq import handle_faq, handle_
 
 class CustomHandler:
     def __init__(self):
-        self.dialogflow = DialogflowHandler()
+        # self.dialogflow = DialogflowHandler()
         self.user_state = {}
 
 
@@ -45,20 +45,41 @@ class CustomHandler:
 
         # Proceed with Dialogflow intent detection
         
-        df_response = self.dialogflow.raw_detect_intent(text, user_id)
-        intent = df_response["intent"]
-        params = df_response["parameters"]
-        fulfillment = df_response["fulfillment_text"]
+        # Simple keyword-based intent detection (local)
+        text_lower = text.lower()
+        
+        
+        if "search" in text_lower:
+            intent = "searchbook"
+        elif "faq" in text_lower or "question" in text_lower:
+            intent = "faq"
+        elif "loan record" in text_lower or "record" in text_lower or "history" in text_lower:
+            intent = "loanrecord"
+        elif "extend" in text_lower:
+            intent = "extendloan"
+        elif "return" in text_lower:
+            intent = "return"
+        elif "borrow" in text_lower:
+            intent = "borrow"
+        elif any(word in text_lower for word in ["hi", "hello", "hey", "start"]):
+            intent = "Default Welcome Intent"
+        else:
+            intent = "unknown"
+
+        fulfillment = ""  # no fulfillment from Dialogflow
+        params = {}
+        output_contexts = []
+
 
         print(f'intent: {intent}')
         print(f'params: {params}')
         print(f'fulfillment: {fulfillment}\n')
 
-        output_contexts = df_response["output_contexts"]
-        print("output_contexts (from dialogflow)",output_contexts)
+        #output_contexts = df_response["output_contexts"]
+        #print("output_contexts (from dialogflow)",output_contexts)
         output_params = {}
-        if intent in ("searchbook - title - confirm", "searchbook - author - confirm") and output_contexts:
-            output_params = output_contexts[0].parameters
+        #if intent in ("searchbook - title - confirm", "searchbook - author - confirm") and output_contexts:
+        #    output_params = output_contexts[0].parameters
 
         if intent == "Default Welcome Intent":
             return show_welcome()
@@ -83,6 +104,9 @@ class CustomHandler:
         
         elif intent == "searchbook - author - confirm":
             return handle_search_book_author(output_params)
+        
+        elif intent == "faq":
+            return handle_faq()
 
         return {
             "type": "text",
